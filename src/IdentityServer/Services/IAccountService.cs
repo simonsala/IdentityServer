@@ -9,9 +9,9 @@ public interface IAccountService
 
     Task<Result<LoginResult>> LoginAsync(Login login);
 
-    Task<LogoutContextResult> GetLogoutContextAsync(LogoutContext logoutContext);
+    Task<Result<LogoutContextResult>> GetLogoutContextAsync(LogoutContext logoutContext);
 
-    Task<LogoutResult> LogoutAsync(Logout logout);
+    Task<Result<LogoutResult>> LogoutAsync(Logout logout);
 
     Task<Result<ErrorResult>> GetErrorAsync(string errorId, CancellationToken ct);
 

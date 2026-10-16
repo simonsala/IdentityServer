@@ -9,4 +9,8 @@ public class SignUp
     public string Email { get; set; } = default!;
 
     public string Password { get; set; } = default!;
+
+    public string RedirectUrl { get; set; } = "";
+
+    public CancellationToken CancellationToken { get; set; }
 }

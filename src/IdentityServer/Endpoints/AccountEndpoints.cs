@@ -12,16 +12,20 @@ public static class AccountEndpoints
     {
         var group = app.MapGroup("/api/account").WithTags("Account");
 
+        //login
         group.MapGet("/login-context", GetLoginContext);
         group.MapPost("/login", Login);
         group.MapGet("/logout-context", GetLogoutContext);
         group.MapPost("/logout", Logout);
         group.MapGet("/error", GetError);
 
+        //signup
+        group.MapPost("/signup", SignUp);
+
         return app;
     }
 
-    private static async Task<Results<Ok<LoginContextResult>, ProblemHttpResult>> GetLoginContext(
+    private static async Task<Results<Ok<LoginContextResponse>, ProblemHttpResult>> GetLoginContext(
         string returnUrl, IAccountService accountService, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(returnUrl))
@@ -35,10 +39,12 @@ public static class AccountEndpoints
             return ToProblem(result.Error, StatusCodes.Status400BadRequest);
         }
 
-        return TypedResults.Ok(result.Value);
+        var response = new LoginContextResponse(result?.Value?.ClientId, result.Value.ClientName, result.Value.LoginHint);
+
+        return TypedResults.Ok(response);
     }
 
-    private static async Task<Results<Ok<LoginResult>, ValidationProblem, ProblemHttpResult>> Login(
+    private static async Task<Results<Ok<LoginResponse>, ValidationProblem, ProblemHttpResult>> Login(
         LoginRequest request, IAccountService accountService, CancellationToken ct)
     {
         var errors = new Dictionary<string, string[]>();
@@ -76,14 +82,15 @@ public static class AccountEndpoints
             return ToProblem(result.Error, statusCode);
         }
 
-        return TypedResults.Ok(result.Value);
+        return TypedResults.Ok(new LoginResponse { RedirectUrl = result.Value.RedirectUrl });
     }
 
-    private static async Task<Ok<LogoutContextResult>> GetLogoutContext(
+    private static async Task<Ok<LogoutContextResponse>> GetLogoutContext(
         string? logoutId, ClaimsPrincipal user, IAccountService accountService, CancellationToken ct)
     {
         var result = await accountService.GetLogoutContextAsync(new LogoutContext { LogoutId = logoutId, User = user, Ct = ct });
-        return TypedResults.Ok(result);
+        var response = new LogoutContextResponse(result.ShowSignoutPrompt, result.Value.ClientName);
+        return TypedResults.Ok(response);
     }
 
     private static async Task<Ok<LogoutResult>> Logout(
@@ -128,7 +135,11 @@ public static class AccountEndpoints
 
         if (result.IsFailure)
         {
-            return ToProblem(result.Error, StatusCodes.Status400BadRequest);
+            var statusCode = result.Error == AccountErrors.SignUpError ? 
+                                             StatusCodes.Status500InternalServerError :
+                                             StatusCodes.Status400BadRequest;
+
+            return ToProblem(result.Error, statusCode);
         }
 
         return TypedResults.Ok(result.Value);

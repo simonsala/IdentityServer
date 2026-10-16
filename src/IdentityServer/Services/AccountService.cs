@@ -130,27 +130,43 @@ public class AccountService(
             return AccountErrors.InvalidSignUpRequest;
         }
 
-        var user = new ApplicationUser
+        // check if we are in the context of an authorization request
+        var context = await interaction.GetAuthorizationContextAsync(signUp.RedirectUrl, signUp.CancellationToken);
+
+        if (context is null)
         {
+            return AccountErrors.InvalidReturnUrl;
+        }
+
+        var user = new ApplicationUser
+        { 
             UserName = signUp.Email,
             Email = signUp.Email,
             FirstName = signUp.FirstName,
             LastName = signUp.LastName
         };
+
         var result = await userManager.CreateAsync(user, signUp.Password);
 
         if (!result.Succeeded)
         {
-            return AccountErrors.InvalidSignUpRequest;
+            return AccountErrors.SignUpError;
         }
+        
+        var isuser = new IdentityServerUser(user.Id)
+        {
+            DisplayName = user.UserName
+        };
+
+        await httpContextAccessor.HttpContext.SignInAsync(isuser);
 
         var roleResult = await userManager.AddToRoleAsync(user, AppRoles.Customer);
         if (!roleResult.Succeeded)
         {
-            return AccountErrors.InvalidSignUpRequest;
+            return AccountErrors.SignUpError;
         }
 
-        return new SignUpResult { Success = true };
+        return new SignUpResult { RedirectUrl = signUp.RedirectUrl };
     }
 
     public async Task<Result<ErrorResult>> GetErrorAsync(string errorId, CancellationToken ct)

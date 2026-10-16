@@ -11,7 +11,6 @@ public static class Config
         {
             new IdentityResources.OpenId(),
             new IdentityResources.Profile(),
-            new IdentityResource("customer", new[] { "customer_number" }),
             new IdentityResource("roles", "User roles", new[] { JwtClaimTypes.Role })
         };
 
@@ -60,7 +59,6 @@ public static class Config
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
                         "ecommerceAPI",
-                        "customer",
                         "roles"
                     }
                 }
