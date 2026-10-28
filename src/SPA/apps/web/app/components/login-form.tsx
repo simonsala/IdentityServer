@@ -24,7 +24,7 @@ import { useSubmit, useActionData, useNavigation } from 'react-router';
 import { Link } from "react-router";
 
 const loginSchema = object({
-  email: string().email().required(),
+  username: string().email().required(),
   password: string().min(8).required(),
 });
 
@@ -32,21 +32,25 @@ type LoginFormValues = InferType<typeof loginSchema>;
 
 export function LoginForm({
   className,
+  returnUrl,
+  loginHint,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { returnUrl: string; loginHint?: string | null }) {
   const submit = useSubmit(); // React Router's submit imperative hook
   const serverErrors = useActionData(); // Catches validation errors returned from the server
   const navigation = useNavigation();
+  const isSubmitting = navigation.state !== "idle";
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(loginSchema),
     mode: 'onTouched',
+    defaultValues: { username: loginHint ?? "" },
   });
 
     // 2. React Hook Form validates on the client first
   const onSubmit = (data: LoginFormValues) => {
-    // If valid, submit directly to React Router's server action
-    submit(data, { method: 'post', action: '/login' });
+    // no explicit action: posts to the current route's clientAction and keeps ?returnUrl in the URL
+    submit({ ...data, returnUrl }, { method: 'post' });
   };
 
   return (
@@ -85,16 +89,16 @@ export function LoginForm({
                 Or continue with
               </FieldSeparator>
               <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <FieldLabel htmlFor="username">Email</FieldLabel>
                 <Input
-                  id="email"
+                  id="username"
                   type="email"
-                  {...register('email')}
+                  {...register('username')}
                   placeholder="m@example.com"
                   required
                 />
-                  {(errors.email || serverErrors?.fieldErrors?.email) && (
-                    <p style={{ color: 'red' }}>{errors.email?.message || serverErrors.fieldErrors.email}</p>
+                  {(errors.username || serverErrors?.fieldErrors?.username) && (
+                    <p style={{ color: 'red' }}>{errors.username?.message || serverErrors.fieldErrors.username}</p>
                   )}
               </Field>
               <Field>
@@ -113,7 +117,12 @@ export function LoginForm({
                 )}
               </Field>
               <Field>
-                <Button type="submit">Login</Button>
+                {serverErrors?.formError && (
+                  <p role="alert" style={{ color: 'red' }}>{serverErrors.formError}</p>
+                )}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Signing in…" : "Login"}
+                </Button>
                 <FieldDescription className="text-center">
                   Don&apos;t have an account? <Link to="/signup" className="text-primary">Sign up</Link>
                 </FieldDescription>

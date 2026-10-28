@@ -48,6 +48,9 @@ public static class Config
                     AllowedGrantTypes = GrantTypes.Code,
                     RequirePkce = true,
 
+                    // issue refresh tokens so the SPA server (BFF) can renew access tokens without the user
+                    AllowOfflineAccess = true,
+
                     // where to redirect to after login
                     RedirectUris = { "https://localhost:5173/auth/callback" },
 

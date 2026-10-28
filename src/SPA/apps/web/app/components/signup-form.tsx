@@ -21,8 +21,9 @@ import { yupResolver } from "@hookform/resolvers/yup/src/index.js"
 import { Link } from "react-router";
 
 const signupSchema = object({
-  name: string().required("Full Name is required"),
-  email: string().email("Invalid email").required("Email is required"),
+  firstName: string().required("First Name is required"),
+  lastName: string().required("Last Name is required"),
+  username: string().email("Invalid email").required("Email is required"),
   password: string().min(8, "Password must be at least 8 characters").required("Password is required"),
   confirmPassword: string()
     .oneOf([ref("password")], "Passwords must match")
@@ -63,23 +64,30 @@ export function SignupForm({
           <form onSubmit={handleSubmit(onSubmit)}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                <Input id="name" type="text" placeholder="John Doe" required {...register("name")} />
-                {(errors.name || serverErrors?.fieldErrors?.name) && (
-                  <p style={{ color: 'red' }}>{errors.name?.message || serverErrors.fieldErrors.name}</p>
+                <FieldLabel htmlFor="firstName">First Name</FieldLabel>
+                <Input id="firstName" type="text" placeholder="John" required {...register("firstName")} />
+                {(errors.firstName || serverErrors?.fieldErrors?.firstName) && (
+                  <p style={{ color: 'red' }}>{errors.firstName?.message || serverErrors.fieldErrors.firstName}</p>
                 )}
               </Field>
               <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <FieldLabel htmlFor="lastName">Last Name</FieldLabel>
+                <Input id="lastName" type="text" placeholder="Doe" required {...register("lastName")} />
+                {(errors.lastName || serverErrors?.fieldErrors?.lastName) && (
+                  <p style={{ color: 'red' }}>{errors.lastName?.message || serverErrors.fieldErrors.lastName}</p>
+                )}
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="username">Email</FieldLabel>
                 <Input
-                  id="email"
+                  id="username"
                   type="email"
                   placeholder="m@example.com"
                   required
-                  {...register("email")}
+                  {...register("username")}
                 />
-                  {(errors.email || serverErrors?.fieldErrors?.email) && (
-                    <p style={{ color: 'red' }}>{errors.email?.message || serverErrors.fieldErrors.email}</p>
+                  {(errors.username || serverErrors?.fieldErrors?.username) && (
+                    <p style={{ color: 'red' }}>{errors.username?.message || serverErrors.fieldErrors.username}</p>
                   )}
               </Field>
               <Field>

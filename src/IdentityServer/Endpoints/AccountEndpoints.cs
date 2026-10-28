@@ -8,9 +8,13 @@ namespace IdentityServer.Endpoints;
 
 public static class AccountEndpoints
 {
+    public const string CorsPolicyName = "spa";
+
     public static IEndpointRouteBuilder MapAccountEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/account").WithTags("Account");
+        var group = app.MapGroup("/api/account")
+            .WithTags("Account")
+            .RequireCors(CorsPolicyName);
 
         //login
         group.MapGet("/login-context", GetLoginContext);
@@ -89,15 +93,16 @@ public static class AccountEndpoints
         string? logoutId, ClaimsPrincipal user, IAccountService accountService, CancellationToken ct)
     {
         var result = await accountService.GetLogoutContextAsync(new LogoutContext { LogoutId = logoutId, User = user, Ct = ct });
-        var response = new LogoutContextResponse(result.ShowSignoutPrompt, result.Value.ClientName);
+        var response = new LogoutContextResponse(result.Value.ShowSignoutPrompt, result.Value.ClientName);
         return TypedResults.Ok(response);
     }
 
-    private static async Task<Ok<LogoutResult>> Logout(
+    private static async Task<Ok<LogoutResponse>> Logout(
         LogoutRequest request, ClaimsPrincipal user, IAccountService accountService, CancellationToken ct)
     {
         var result = await accountService.LogoutAsync(new Logout { LogoutId = request.LogoutId, User = user, Ct = ct });
-        return TypedResults.Ok(result);
+        var response = new LogoutResponse(result.Value.PostLogoutRedirectUri, result.Value.SignOutIframeUrl, result.Value.ClientName);
+        return TypedResults.Ok(response);
     }
 
     private static async Task<Results<Ok<SignUpResult>, ValidationProblem, ProblemHttpResult>> SignUp(
@@ -112,9 +117,9 @@ public static class AccountEndpoints
         {
             errors[nameof(request.LastName)] = ["LastName is required."];
         }
-        if (string.IsNullOrWhiteSpace(request.Email))
+        if (string.IsNullOrWhiteSpace(request.Username))
         {
-            errors[nameof(request.Email)] = ["Email is required."];
+            errors[nameof(request.Username)] = ["Username is required."];
         }
         if (string.IsNullOrWhiteSpace(request.Password))
         {
@@ -129,7 +134,7 @@ public static class AccountEndpoints
         {
             FirstName = request.FirstName,
             LastName = request.LastName,
-            Email = request.Email,
+            Username = request.Username,
             Password = request.Password
         });
 

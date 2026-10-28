@@ -52,24 +52,12 @@ public class AccountService(
             return AccountErrors.InvalidCredentials;
         }
 
+        // issues the IdentityServer session cookie (Identity.Application) with sub, security stamp and amr/idp/auth_time
         var result = await signInManager.PasswordSignInAsync(user, password, isPersistent: rememberLogin, lockoutOnFailure: true);
 
         if (result.Succeeded)
         {
             await events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: clientId), ct);
-            
-            var props = new AuthenticationProperties();
-            if (rememberLogin)
-            {
-                props.IsPersistent = true; 
-            }
-
-            var isuser = new IdentityServerUser(user.Id)
-            {
-                DisplayName = user.UserName
-            };
-
-            await httpContextAccessor.HttpContext.SignInAsync(isuser, props);
             return new LoginResult { RedirectUrl = returnUrl };
         }
 
@@ -88,7 +76,7 @@ public class AccountService(
         return AccountErrors.InvalidCredentials;
     }
 
-    public async Task<LogoutContextResult> GetLogoutContextAsync(LogoutContext logoutContext)
+    public async Task<Result<LogoutContextResult>> GetLogoutContextAsync(LogoutContext logoutContext)
     {
         var logoutId = logoutContext.LogoutId;
         var user = logoutContext.User;
@@ -100,7 +88,7 @@ public class AccountService(
         return new LogoutContextResult(showSignoutPrompt, context.ClientName);
     }
 
-    public async Task<LogoutResult> LogoutAsync(Logout logout)
+    public async Task<Result<LogoutResult>> LogoutAsync(Logout logout)
     {
         var logoutId = logout.LogoutId;
         var user = logout.User;
@@ -116,7 +104,7 @@ public class AccountService(
                 await httpContextAccessor.HttpContext.SignOutAsync();
             }
             await events.RaiseAsync(new UserLogoutSuccessEvent(user.GetSubjectId(), user.GetDisplayName()), ct);
-        }
+        } 
 
         var context = await interaction.GetLogoutContextAsync(logoutId, ct);
 
@@ -140,8 +128,8 @@ public class AccountService(
 
         var user = new ApplicationUser
         { 
-            UserName = signUp.Email,
-            Email = signUp.Email,
+            UserName = signUp.Username,
+            Email = signUp.Username,
             FirstName = signUp.FirstName,
             LastName = signUp.LastName
         };

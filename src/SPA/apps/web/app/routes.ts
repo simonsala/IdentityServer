@@ -2,5 +2,7 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes"
 
 export default [index("routes/home.tsx"), 
                 route("login", "routes/login.tsx"),
-                route("signup", "routes/signup.tsx")
+                route("signup", "routes/signup.tsx"),
+                route("auth/login", "routes/auth.login.ts"),
+                route("auth/callback", "routes/auth.callback.tsx")
               ] satisfies RouteConfig

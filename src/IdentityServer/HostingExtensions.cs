@@ -74,6 +74,10 @@ internal static class HostingExtensions
             options.UserInteraction.LogoutIdParameter = "logoutId";
             options.UserInteraction.ErrorUrl = $"{spaUrl}/error";
             options.UserInteraction.ErrorIdParameter = "errorId";
+
+            // LoginUrl is on another origin, so IdentityServer sends an absolute returnUrl
+            // (https://localhost:5001/connect/authorize/callback?...); accept it when validating
+            options.UserInteraction.AllowOriginInReturnUrl = true;
         })
         .AddConfigurationStore(options =>
         {
@@ -87,6 +91,16 @@ internal static class HostingExtensions
         })
         .AddAspNetIdentity<ApplicationUser>()
         .AddProfileService<CustomerProfileService>();
+
+        // the SPA calls /api/account from the browser and needs the IdentityServer cookie set/sent
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(AccountEndpoints.CorsPolicyName, policy => policy
+                .WithOrigins(spaUrl)
+                .WithMethods(HttpMethods.Get, HttpMethods.Post)
+                .WithHeaders("Content-Type")
+                .AllowCredentials());
+        });
 
         builder.Services.AddScoped<IAccountService, AccountService>();
         // add `.PersistKeysTo…()` and `.ProtectKeysWith…()` calls
@@ -150,6 +164,8 @@ internal static class HostingExtensions
                 {
                     entity.AllowedScopes.Add(new ClientScope { Scope = scope });
                 }
+
+                entity.AllowOfflineAccess = client.AllowOfflineAccess;
             }
 
             var identityResources = context.IdentityResources.Select(r => r.Name).ToList();

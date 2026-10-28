@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Duende.IdentityModel;
 using Duende.IdentityServer.AspNetIdentity;
 using Duende.IdentityServer.Models;
 using Microsoft.AspNetCore.Identity;
@@ -14,7 +15,9 @@ public class CustomerProfileService(
     {
         var principal = await GetUserClaimsAsync(user);
         var identity = (ClaimsIdentity)principal.Identity!;
-        identity.AddClaim(new Claim(ClaimTypes.GivenName, user.FirstName));
+        // use OIDC claim names; AddRequestedClaims drops anything not requested by the "profile" scope
+        identity.AddClaim(new Claim(JwtClaimTypes.GivenName, user.FirstName));
+        identity.AddClaim(new Claim(JwtClaimTypes.FamilyName, user.LastName));
 
         context.AddRequestedClaims(principal.Claims);
     }

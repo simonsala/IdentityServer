@@ -1,10 +1,11 @@
 import { SignupForm } from "@/components/signup-form"
 import { GalleryVerticalEndIcon } from "lucide-react"
-import type { Route } from "./+types/home";
+import type { ClientActionFunctionArgs } from "react-router";
 
-export async function action({
+export async function clientAction({
   request,
-}: Route.ActionArgs) {
+  params
+}: ClientActionFunctionArgs) {
   let formData = await request.formData();
   console.log(formData);
 }
